@@ -18,10 +18,9 @@ Mobile app that records in-person meetings, continues recording in the backgroun
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. In SQL Editor, run `supabase/migrations/001_meetings.sql`.
-3. In Storage, create a **public** bucket named `recordings`. Add policies:
-   - **Insert:** `anon` can insert into `recordings`.
-   - **Select:** `anon` can select from `recordings` (public read for backend download).
-4. Copy Project URL and anon key from Settings → API.
+3. In Storage, create a **public** bucket named `recordings`.
+4. In SQL Editor, run `supabase/migrations/002_storage_recordings.sql` to allow anon insert/select on the bucket. (If you get "new row violates row-level security policy" on upload, you missed this step.)
+5. Copy Project URL and anon key from Settings → API.
 
 ### 2. Environment
 
@@ -112,6 +111,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
   requirements.txt
 /supabase
   migrations/001_meetings.sql
+  migrations/002_storage_recordings.sql
 ```
 
 ## Evaluation Notes

@@ -4,11 +4,15 @@ Downloads audio, transcribes with OpenAI Whisper, summarizes, updates Supabase, 
 """
 import os
 import tempfile
+
+from dotenv import load_dotenv
 import httpx
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
 from supabase import create_client
+
+load_dotenv()
 
 app = FastAPI(title="Meeting Notes API")
 

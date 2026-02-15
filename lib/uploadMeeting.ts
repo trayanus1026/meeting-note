@@ -1,4 +1,5 @@
-import * as FileSystem from "expo-file-system";
+import { decode } from "base64-arraybuffer";
+import * as FileSystem from "expo-file-system/legacy";
 import { supabase } from "./supabase";
 import { getPushToken } from "./notifications";
 
@@ -23,9 +24,9 @@ export async function uploadAndProcessMeeting(localUri: string): Promise<UploadR
     const fileContent = await FileSystem.readAsStringAsync(localUri, {
       encoding: "base64",
     });
-    const blob = base64ToBlob(fileContent, "audio/mp4");
+    const arrayBuffer = decode(fileContent);
 
-    const { error: uploadError } = await supabase.storage.from("recordings").upload(fileName, blob, {
+    const { error: uploadError } = await supabase.storage.from("recordings").upload(fileName, arrayBuffer, {
       contentType: "audio/mp4",
       upsert: false,
     });
@@ -77,14 +78,4 @@ export async function uploadAndProcessMeeting(localUri: string): Promise<UploadR
     console.error(e);
     return { error: e instanceof Error ? e.message : "Upload failed" };
   }
-}
-
-function base64ToBlob(base64: string, mimeType: string): Blob {
-  const byteCharacters = atob(base64);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-  return new Blob([byteArray], { type: mimeType });
 }

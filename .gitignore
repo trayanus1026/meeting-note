@@ -41,3 +41,25 @@ app-example
 # generated native folders
 /ios
 /android
+# Env (never commit keys)
+.env
+.env.local
+*.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+backend/.venv/
+backend/__pycache__/
+*.pyc
+*.pyo
+*.orig.*
+# Build

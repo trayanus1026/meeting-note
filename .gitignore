@@ -1,15 +1,16 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
 node_modules/
-
-# Expo
 .expo/
 dist/
+android/
 web-build/
 expo-env.d.ts
+# Python
+backend/venv/
+backend/__pycache__/
+*.pyc
+*.pyo
+*.orig.*
 
-# Native
 .kotlin/
 *.orig.*
 *.jks
@@ -56,10 +57,4 @@ app-example
 .DS_Store
 Thumbs.db
 
-# Python
-backend/.venv/
-backend/__pycache__/
-*.pyc
-*.pyo
-*.orig.*
 # Build

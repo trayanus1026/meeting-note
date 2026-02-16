@@ -1,18 +1,28 @@
-import { View, Text, StyleSheet, Pressable, Alert, ActivityIndicator } from "react-native";
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "expo-router";
 import {
-  useAudioRecorder,
-  useAudioRecorderState,
+  AudioModule,
   RecordingPresets,
   setAudioModeAsync,
-  AudioModule,
+  useAudioRecorder,
+  useAudioRecorderState,
 } from "expo-audio";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { showRecordingUploadedNotification } from "../../lib/notifications";
 import { uploadAndProcessMeeting } from "../../lib/uploadMeeting";
 
 export default function RecordScreen() {
   const router = useRouter();
-  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(
+    null,
+  );
   const [isPreparing, setIsPreparing] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -25,7 +35,7 @@ export default function RecordScreen() {
     if (!granted) {
       Alert.alert(
         "Microphone access required",
-        "Please enable microphone access in Settings to record meetings."
+        "Please enable microphone access in Settings to record meetings.",
       );
     }
     return granted;
@@ -40,7 +50,7 @@ export default function RecordScreen() {
         allowsRecording: true,
         playsInSilentMode: true,
         shouldPlayInBackground: true,
-        interruptionMode: 'duckOthers', // duck others
+        interruptionMode: "duckOthers", // duck others
       });
     })();
   }, []);
@@ -74,7 +84,11 @@ export default function RecordScreen() {
       const result = await uploadAndProcessMeeting(uri);
       setUploading(false);
       if ("meetingId" in result) {
-        router.push({ pathname: "/meeting/[id]", params: { id: result.meetingId } } as never);
+        await showRecordingUploadedNotification(result.meetingId);
+        router.push({
+          pathname: "/meeting/[id]",
+          params: { id: result.meetingId },
+        } as never);
       } else {
         Alert.alert("Upload failed", result.error);
       }
@@ -95,7 +109,10 @@ export default function RecordScreen() {
   }
 
   const isRecording = recorderState?.isRecording ?? false;
-  const durationSec = recorderState?.durationMillis != null ? recorderState.durationMillis / 1000 : 0;
+  const durationSec =
+    recorderState?.durationMillis != null
+      ? recorderState.durationMillis / 1000
+      : 0;
   const durationStr = `${Math.floor(durationSec / 60)}:${String(Math.floor(durationSec % 60)).padStart(2, "0")}`;
   const busy = isPreparing || uploading;
 
@@ -103,11 +120,13 @@ export default function RecordScreen() {
     <View style={styles.container}>
       <View style={styles.main}>
         <Text style={styles.title}>
-          {uploading ? "Uploading…" : isRecording ? "Recording…" : "Tap to start recording"}
+          {uploading
+            ? "Uploading…"
+            : isRecording
+              ? "Recording…"
+              : "Tap to start recording"}
         </Text>
-        {isRecording && (
-          <Text style={styles.duration}>{durationStr}</Text>
-        )}
+        {isRecording && <Text style={styles.duration}>{durationStr}</Text>}
         <Text style={styles.hint}>
           {uploading
             ? "Your recording is being uploaded. You'll get a notification when the transcript is ready."
@@ -127,7 +146,13 @@ export default function RecordScreen() {
         disabled={busy}
       >
         <Text style={styles.buttonLabel}>
-          {isPreparing ? "Preparing…" : uploading ? "Uploading…" : isRecording ? "Stop" : "Record"}
+          {isPreparing
+            ? "Preparing…"
+            : uploading
+              ? "Uploading…"
+              : isRecording
+                ? "Stop"
+                : "Record"}
         </Text>
       </Pressable>
     </View>

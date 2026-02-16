@@ -35,6 +35,15 @@ EXPO_PUBLIC_PROJECT_ID=your-expo-project-id
 
 Use your machine’s LAN IP for `EXPO_PUBLIC_BACKEND_URL` so the device/emulator can reach the backend (e.g. `http://192.168.1.10:8000`).
 
+**Android push (FCM)** — required for “transcript ready” push notifications on Android. If you see `Default FirebaseApp is not initialized` or `getExpoPushTokenAsync error`, add Firebase:
+
+1. Create a project at [Firebase Console](https://console.firebase.google.com/).
+2. Add an Android app with package name **`com.anonymous.meetingnote`** (or your `app.config.js` `android.package`).
+3. Download **google-services.json** and place it in the project root: `meeting-note/google-services.json`.
+4. Rebuild the app (`npx expo prebuild --clean` then `npx expo run:android`, or your usual Android build).
+
+See [Expo FCM credentials](https://docs.expo.dev/push-notifications/fcm-credentials/) for optional EAS/Google Service Account setup (for sending pushes from EAS).
+
 **Backend** — create `meeting-note/backend/.env`:
 
 ```
@@ -69,6 +78,48 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 2. App uploads to Supabase Storage, creates a meeting row, and calls `POST /process-meeting`.
 3. Backend downloads audio, transcribes with Whisper, summarizes with GPT-4o-mini, updates the meeting, and sends an Expo push notification.
 4. When the notification arrives, tap it to open the meeting detail screen.
+
+### 6. Using LDPlayer (or other emulator instead of Android Studio)
+
+If you use **LDPlayer** and see `could not connect to TCP port 5554` or `emulator-5554`, that’s because Expo/ADB is still trying to use the **Android Studio emulator** (port 5554), which isn’t running. LDPlayer uses a different ADB port, so you must point ADB at LDPlayer and run with `--device`.
+
+**Quick fix (after LDPlayer is running):**
+
+```bash
+npm run android:ldplayer
+```
+
+This resets ADB, connects to LDPlayer on port **5555**, then runs the app and lets you pick the device. If LDPlayer uses another port (**62001** or **21503**), connect manually first:
+
+```bash
+adb kill-server
+adb start-server
+adb connect 127.0.0.1:62001
+npm run android:device
+```
+
+**Manual steps** (if you prefer):
+
+1. **Start LDPlayer** and wait until it’s fully booted.
+2. **Reset ADB**: `adb kill-server` then `adb start-server`.
+3. **Connect to LDPlayer** (port is often **5555**, **62001**, or **21503**; check LDPlayer settings or title bar): `adb connect 127.0.0.1:5555`.
+4. If `emulator-5554` still appears: `adb disconnect emulator-5554`.
+5. **Run and pick device**: `npx expo run:android --device` (or `npm run android:device`).
+
+### 7. Android build fails with `ld.lld: unknown file type` (Windows)
+
+If the build fails in `react-native-reanimated` with linker errors like `ld.lld: error: unknown file type .cpp.o`, this is a known Windows issue. The project overrides `reactNativeArchitectures` to **x86_64 only** in `android/build.gradle` (via `withBackgroundAudio` plugin), so Expo CLI’s `-PreactNativeArchitectures=x86_64,arm64-v8a` is forced to x86_64. This works for LDPlayer and avoids the failing arm64-v8a build.
+
+Run a clean prebuild and rebuild:
+
+```bash
+npx expo prebuild --clean
+npx expo run:android
+```
+
+If it still fails, clear the reanimated CMake cache: delete `node_modules\react-native-reanimated\android\.cxx`, then rebuild.
+
+For production or real arm64 devices, remove the architecture override from `plugins/withBackgroundAudio.js` and set `buildArchs: ["x86_64", "arm64-v8a"]` in `app.config.js`, then prebuild and rebuild.
 
 ---
 

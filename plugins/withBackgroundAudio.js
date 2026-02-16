@@ -1,4 +1,22 @@
-const { withInfoPlist, withAndroidManifest } = require("expo/config-plugins");
+const fs = require("fs");
+const path = require("path");
+const {
+  withInfoPlist,
+  withAndroidManifest,
+  withDangerousMod,
+} = require("expo/config-plugins");
+
+const ARCH_OVERRIDE_BLOCK = `
+// Force x86_64 only when Expo CLI passes both archs - arm64-v8a causes ld.lld "unknown file type" on Windows (react-native-reanimated)
+if (project.hasProperty("reactNativeArchitectures")) {
+  def archs = project.findProperty("reactNativeArchitectures").toString()
+  if (archs.contains("arm64-v8a")) {
+    project.ext.set("reactNativeArchitectures", "x86_64")
+    println "[ExpoRootProject] Forcing reactNativeArchitectures=x86_64 (skip arm64-v8a for Windows compatibility)"
+  }
+}
+
+`;
 
 /**
  * Custom Expo config plugin for background audio recording.
@@ -63,6 +81,26 @@ function withBackgroundAudio(config, props = {}) {
 
     return c;
   });
+
+  // Override reactNativeArchitectures to x86_64 only when Expo CLI passes arm64-v8a (fixes Windows build)
+  config = withDangerousMod(config, [
+    "android",
+    async (c) => {
+      const buildGradlePath = path.join(
+        c.modRequest.platformProjectRoot,
+        "build.gradle",
+      );
+      let content = fs.readFileSync(buildGradlePath, "utf8");
+      if (!content.includes("Forcing reactNativeArchitectures=x86_64")) {
+        content = content.replace(
+          /(\/\/ Top-level build file[^\n]*\n\n)/,
+          `$1${ARCH_OVERRIDE_BLOCK}\n`,
+        );
+        fs.writeFileSync(buildGradlePath, content);
+      }
+      return c;
+    },
+  ]);
 
   return config;
 }

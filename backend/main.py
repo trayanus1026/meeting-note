@@ -108,7 +108,7 @@ async def send_expo_push(token: str, title: str, body: str, data: dict):
     if not token or not token.startswith("ExponentPushToken"):
         return
     async with httpx.AsyncClient() as client:
-        await client.post(
+        r = await client.post(
             EXPO_PUSH_URL,
             json={
                 "to": token,
@@ -118,6 +118,13 @@ async def send_expo_push(token: str, title: str, body: str, data: dict):
                 "channelId": "default",
             },
         )
+        if r.status_code != 200:
+            print(f"[process-meeting] Expo push failed: {r.status_code} {r.text}")
+        else:
+            resp = r.json()
+            for ticket in resp.get("data", []) or []:
+                if isinstance(ticket, dict) and ticket.get("status") == "error":
+                    print(f"[process-meeting] Expo push ticket error: {ticket}")
 
 
 @app.get("/health")

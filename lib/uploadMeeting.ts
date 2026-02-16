@@ -1,9 +1,10 @@
 import { decode } from "base64-arraybuffer";
 import * as FileSystem from "expo-file-system/legacy";
-import { supabase } from "./supabase";
 import { getPushToken } from "./notifications";
+import { supabase } from "./supabase";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 export type UploadResult = { meetingId: string } | { error: string };
 
@@ -11,7 +12,9 @@ export type UploadResult = { meetingId: string } | { error: string };
  * Upload recorded audio to Supabase Storage, create meeting row, and trigger backend processing.
  * Backend will transcribe, summarize, update DB, and send push notification when ready.
  */
-export async function uploadAndProcessMeeting(localUri: string): Promise<UploadResult> {
+export async function uploadAndProcessMeeting(
+  localUri: string,
+): Promise<UploadResult> {
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -26,17 +29,21 @@ export async function uploadAndProcessMeeting(localUri: string): Promise<UploadR
     });
     const arrayBuffer = decode(fileContent);
 
-    const { error: uploadError } = await supabase.storage.from("recordings").upload(fileName, arrayBuffer, {
-      contentType: "audio/mp4",
-      upsert: false,
-    });
+    const { error: uploadError } = await supabase.storage
+      .from("recordings")
+      .upload(fileName, arrayBuffer, {
+        contentType: "audio/mp4",
+        upsert: false,
+      });
 
     if (uploadError) {
       console.error("Upload error:", uploadError);
       return { error: uploadError.message };
     }
 
-    const { data: publicUrl } = supabase.storage.from("recordings").getPublicUrl(fileName);
+    const { data: publicUrl } = supabase.storage
+      .from("recordings")
+      .getPublicUrl(fileName);
     const audioUrl = publicUrl.publicUrl;
 
     const { data: meeting, error: insertError } = await supabase
@@ -56,7 +63,6 @@ export async function uploadAndProcessMeeting(localUri: string): Promise<UploadR
     }
 
     const pushToken = await getPushToken();
-
     const res = await fetch(`${BACKEND_URL}/process-meeting`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

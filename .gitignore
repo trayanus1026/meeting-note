@@ -3,6 +3,7 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+google-services.json
 # Python
 backend/venv/
 backend/__pycache__/

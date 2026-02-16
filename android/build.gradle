@@ -1,0 +1,36 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+
+// Force x86_64 only when Expo CLI passes both archs - arm64-v8a causes ld.lld "unknown file type" on Windows (react-native-reanimated)
+if (project.hasProperty("reactNativeArchitectures")) {
+  def archs = project.findProperty("reactNativeArchitectures").toString()
+  if (archs.contains("arm64-v8a")) {
+    project.ext.set("reactNativeArchitectures", "x86_64")
+    println "[ExpoRootProject] Forcing reactNativeArchitectures=x86_64 (skip arm64-v8a for Windows compatibility)"
+  }
+}
+
+
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+        classpath 'com.google.gms:google-services:4.4.1'
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
+}
+
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+}
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

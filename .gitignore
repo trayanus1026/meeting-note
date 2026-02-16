@@ -1,7 +1,6 @@
 node_modules/
 .expo/
 dist/
-android/
 web-build/
 expo-env.d.ts
 # Python
@@ -41,7 +40,6 @@ app-example
 
 # generated native folders
 /ios
-/android
 # Env (never commit keys)
 .env
 .env.local
